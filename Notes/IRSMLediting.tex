@@ -1,0 +1,110 @@
+\documentclass[letterpaper,12pt]{article}
+
+\usepackage{threeparttable}
+\usepackage{geometry}
+\geometry{letterpaper,tmargin=1in,bmargin=1in,lmargin=1.25in,rmargin=1.25in}
+\usepackage[format=hang,font=normalsize,labelfont=bf]{caption}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{delarray}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{lscape}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{float,color}
+\usepackage[pdftex]{graphicx}
+\usepackage{listings}
+\lstset{basicstyle=\footnotesize\ttfamily, language=Python, showstringspaces=false}
+\usepackage{pdfsync}
+\usepackage{verbatim}
+\usepackage{placeins}
+\usepackage{geometry}
+\usepackage{pdflscape}
+\synctex=1
+\usepackage{hyperref}
+\hypersetup{colorlinks,linkcolor=red,urlcolor=blue,citecolor=red}
+\usepackage{bm}
+
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{acknowledgement}[theorem]{Acknowledgement}
+\newtheorem{algorithm}[theorem]{Algorithm}
+\newtheorem{axiom}[theorem]{Axiom}
+\newtheorem{case}[theorem]{Case}
+\newtheorem{claim}[theorem]{Claim}
+\newtheorem{conclusion}[theorem]{Conclusion}
+\newtheorem{condition}[theorem]{Condition}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{criterion}[theorem]{Criterion}
+\newtheorem{definition}{Definition} % Number definitions on their own
+\newtheorem{derivation}{Derivation} % Number derivations on their own
+\newtheorem{example}[theorem]{Example}
+\newtheorem{exercise}[theorem]{Exercise}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{proposition}{Proposition} % Number propositions on their own
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{solution}[theorem]{Solution}
+\newtheorem{summary}[theorem]{Summary}
+\bibliographystyle{aer}
+\newcommand\ve{\varepsilon}
+%\renewcommand\theenumi{\roman{enumi}}
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+
+\begin{document}
+
+\title{Notes on Machine Learning Approach to Modeling Human Editing Process of IRS Tax Returns}
+\date{\today}
+\author{Richard W. Evans and Daniel Silva-Inclan}
+\maketitle
+
+\pagenumbering{arabic}
+
+
+\section{Regression Model}\label{SecRegModel}
+
+  When U.S. households file their taxes every year, they submit data to the IRS. I think we can divide these data fields for each household $i$ into the subset of fields that ever get edited $\bm{x}_i$ and the rest of the fields that never get edited $\bm{z}_i$. This will reduce the dimensionality of the prediction problem. Define each element of the vectors $\bm{x}_i$ and $\bm{z}_i$ as a variable. Our goal is to accurately predict the change in $\bm{x}_i$ vector of variables as a function of $\bm{x}_i$ and $\bm{z}_i$. Equation $\eqref{EqGenModel}$ is a representation of the true data generating process that we are trying to estimate.
+  \begin{equation}\label{EqGenModel}
+    \bm{y}_i \equiv \Delta\bm{x}_i = f\left(\bm{x}_i,  \bm{z}_i\right)
+  \end{equation}
+  We can then define the edited data as $\bm{\tilde{x}}_i$,
+  \begin{equation}\label{EqXtilde}
+    \begin{split}
+      \bm{\tilde{x}}_i &\equiv \bm{x}_i + \hat{f}\left(\bm{x}_i,  \bm{z}_i\right) + \bm{\ve}_i \\
+      \bm{\tilde{x}}_i - \bm{x}_i &= \widehat{\Delta\bm{x}}_i + \bm{\ve}_i \\
+      \Delta\bm{x}_i &= \hat{\bm{y}}_i + \bm{\ve}_i \\
+      \bm{\tilde{x}}_i &\equiv \hat{\bm{\tilde{x}}}_i + \bm{\ve}_i
+    \end{split}
+  \end{equation}
+  The vector with the hat ``$\:\hat{\:}\:$'' symbol is the estimated model of the predicted change in $\bm{x}_i$ from Equation \eqref{EqGenModel}, and $\hat{\bm{\tilde{x}}}_i\equiv\bm{x}_i + \widehat{\Delta\bm{x}}_i$ is the predicted edited version of the variables (the original values plus the predicted change in those values).
+
+  The model in Equation \eqref{EqGenModel} is necessarily a regression model and not a classifier because the elements in $\Delta\bm{x}_i$ can each take on a continuum of values. We will estimate a machine learning model $\hat{f}\left(\bm{x}_i,  \bm{z}_i\right)$ using a series of training sets that minimizes some criterion on the errors $\bm{\ve}_i$ in a series of test sets.
+
+
+\section{Data}\label{SecData}
+
+  We have data on the original data $\left(\bm{x}_i,\bm{z}_i\right)$ and human-edited data $\bm{\tilde{x}}_i$ for some household tax returns $i$. We can calculate the variable of interest, the change in the editable variables $\bm{y}_i\equiv\Delta\bm{x}_i$ as the following.
+  \begin{equation}\label{EqXchange}
+    \bm{y}_i \equiv \Delta\bm{x}_i \equiv \bm{\tilde{x}}_i - \bm{x}_i
+  \end{equation}
+
+  \begin{itemize}
+    \item The data in $\bm{y}_i$ should have a lot of zeros in it.
+    \item The variables in the vector $\bm{y}_i$ will likely have drastically different scale. Therefore, we will need to make some normalization of $\bm{x}_i$ and $\bm{z}_i$, the inputs to the model $f(\cdot,\cdot)$.
+  \end{itemize}
+
+
+\section{Model Estimation}\label{SecEstimation}
+
+  We can test a number of tuned statistical learning models (e.g., multi-layer perceptron, SVM, random forest) to see which ones most accurately predict the vector of changes $\hat{\bm{y}}_i$ in a series of test sets. \citet{Geron:2017} is a great book for training statistical learning models using Python's \texttt{Scikit-Learn} machine learning library and training those models using the \texttt{TensorFlow} interface.
+
+
+\bibliography{IRSMLediting.bib}
+
+
+\end{document}
